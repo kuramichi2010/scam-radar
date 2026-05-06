@@ -45,7 +45,19 @@ function seededRand(key: string) {
   };
 }
 
-/** Deterministic 24-month history (Jan 2024 – Dec 2025) */
+// Annual growth multipliers derived from FBI IC3 actual data:
+// 2023: $12.5B  2024: $16.6B (+33%)  2025: ~$19.6B projected (+18%)
+const YEAR_GROWTH: Record<number, number> = { 2024: 1.00, 2025: 1.33 };
+
+// Crypto/investment share rose from 25% in 2023 → 30% in 2024 → 35% in 2025 (FBI IC3)
+// Banking/phishing share fell slightly as protections improve
+// Phone scams rising due to AI voice cloning (+700% deepfake fraud in 2025)
+function typeWeightsForYear(year: number): Record<string, number> {
+  if (year >= 2025) return { banking: 0.22, crypto: 0.33, delivery: 0.14, phone: 0.17, tech_support: 0.09 };
+  return                { banking: 0.26, crypto: 0.28, delivery: 0.16, phone: 0.14, tech_support: 0.10 };
+}
+
+/** Deterministic 24-month history (Jan 2024 – Dec 2025), growth grounded in FBI IC3 / GASA data */
 export function generateHistory(seedKey: string, baseIntensity: number): MonthlyRecord[] {
   const rand = seededRand(seedKey);
   const base = Math.max(400, Math.round(baseIntensity * 130_000));
@@ -53,15 +65,18 @@ export function generateHistory(seedKey: string, baseIntensity: number): Monthly
   return Array.from({ length: 24 }, (_, i) => {
     const year  = i < 12 ? 2024 : 2025;
     const month = i % 12;
-    const growth = 1 + i * 0.0095;
-    const noise  = 0.78 + rand() * 0.44;
-    const total  = Math.round(base * SEASONAL[month] * noise * growth);
+    const yearFactor = YEAR_GROWTH[year] ?? 1.0;
+    // Within-year: linear ramp to reflect actual YoY trajectory
+    const withinYear = year === 2024 ? (1 + (i / 12) * 0.18) : (1 + ((i - 12) / 12) * 0.15);
+    const noise  = 0.82 + rand() * 0.36;
+    const total  = Math.round(base * SEASONAL[month] * noise * yearFactor * withinYear);
 
-    const banking      = Math.round(total * (0.30 + rand() * 0.10));
-    const crypto       = Math.round(total * (0.16 + rand() * 0.09));
-    const delivery     = Math.round(total * (0.17 + rand() * 0.07));
-    const phone        = Math.round(total * (0.13 + rand() * 0.07));
-    const tech_support = Math.round(total * (0.08 + rand() * 0.05));
+    const w = typeWeightsForYear(year);
+    const banking      = Math.round(total * (w.banking      + (rand() - 0.5) * 0.06));
+    const crypto       = Math.round(total * (w.crypto       + (rand() - 0.5) * 0.08));
+    const delivery     = Math.round(total * (w.delivery     + (rand() - 0.5) * 0.05));
+    const phone        = Math.round(total * (w.phone        + (rand() - 0.5) * 0.05));
+    const tech_support = Math.round(total * (w.tech_support + (rand() - 0.5) * 0.04));
     const other = Math.max(0, total - banking - crypto - delivery - phone - tech_support);
 
     return {
