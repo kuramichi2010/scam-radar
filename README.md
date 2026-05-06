@@ -25,6 +25,8 @@ ScamRadar は、世界175カ国の詐欺活動をリアルタイムで監視・�
 
 ## スクリーンショット
 
+![ScamRadar Screenshot](screenshot.png)
+
 > ダークモードのサイバーパンク風UIで世界の詐欺脅威を一目で把握できます。
 
 ---
