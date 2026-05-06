@@ -11,16 +11,17 @@ export default function LanguageToggle() {
   };
 
   return (
-    <div className="flex items-center gap-0.5 bg-slate-800 rounded-lg p-0.5">
+    <div className="flex" style={{ border: "1px solid rgba(0,212,255,0.2)" }}>
       {(["en", "ja"] as const).map((lang) => (
         <button
           key={lang}
           onClick={() => toggle(lang)}
-          className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+          className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+          style={
             language === lang
-              ? "bg-white text-slate-900 shadow"
-              : "text-slate-400 hover:text-white"
-          }`}
+              ? { background: "var(--sf-cyan)", color: "#000810", boxShadow: "0 0 12px rgba(0,212,255,0.4)" }
+              : { background: "transparent", color: "rgba(0,212,255,0.4)" }
+          }
         >
           {lang === "en" ? "EN" : "日本語"}
         </button>

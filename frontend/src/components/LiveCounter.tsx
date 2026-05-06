@@ -1,140 +1,122 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { Activity, MessageSquare, Link, Phone, Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff } from "lucide-react";
 import { useStore } from "../store/scamStore";
 
-function AnimatedNumber({ value }: { value: number }) {
-  const [display, setDisplay] = useState(value);
+// Digit roller — flips up on change
+function Digit({ val }: { val: string }) {
   const [key, setKey] = useState(0);
-  const prev = useRef(value);
-
+  const prev = useRef(val);
   useEffect(() => {
-    if (value !== prev.current) {
-      prev.current = value;
-      setDisplay(value);
-      setKey((k) => k + 1);
-    }
-  }, [value]);
-
+    if (val !== prev.current) { prev.current = val; setKey(k => k + 1); }
+  }, [val]);
+  if (val === ",") return <span className="text-sf-border/60 mx-0.5">,</span>;
   return (
-    <AnimatePresence mode="wait">
-      <motion.span
-        key={key}
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.2 }}
-        className="tabular-nums"
-      >
-        {display.toLocaleString()}
-      </motion.span>
-    </AnimatePresence>
+    <span className="inline-block overflow-hidden" style={{ width: "0.62em" }}>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={key}
+          initial={{ y: "-100%", opacity: 0 }}
+          animate={{ y: 0,       opacity: 1 }}
+          exit={{    y: "100%",  opacity: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="block"
+        >
+          {val}
+        </motion.span>
+      </AnimatePresence>
+    </span>
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  color: string;
-}) {
+function RollingNumber({ value, className = "" }: { value: number; className?: string }) {
+  const str = value.toLocaleString();
   return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="bg-slate-800/60 backdrop-blur border border-slate-700 rounded-2xl p-4 flex flex-col gap-2"
-    >
-      <div className={`flex items-center gap-2 ${color}`}>
-        {icon}
-        <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
-      </div>
-      <div className="text-2xl font-bold text-white font-mono">
-        <AnimatedNumber value={value} />
-      </div>
-    </motion.div>
+    <span className={`inline-flex ${className}`}>
+      {str.split("").map((ch, i) => <Digit key={i} val={ch} />)}
+    </span>
+  );
+}
+
+function MiniStat({
+  label, value, color, prefix = ""
+}: { label: string; value: number; color: string; prefix?: string }) {
+  return (
+    <div className="sf-panel p-3 flex flex-col gap-1">
+      <p className="sf-label text-[9px]">{label}</p>
+      <p className="text-base font-bold tabular-nums" style={{ color }}>
+        {prefix}<RollingNumber value={value} />
+      </p>
+    </div>
   );
 }
 
 export default function LiveCounter() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { stats, isConnected } = useStore();
-  const lang = i18n.language;
 
-  if (!stats) {
-    return (
-      <div className="h-48 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (!stats) return (
+    <div className="flex items-center justify-center h-44 gap-3">
+      <div className="w-5 h-5 border border-sf-cyan/50 border-t-sf-cyan rounded-full animate-spin" />
+      <span className="sf-label animate-pulse">INITIALIZING…</span>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="w-2 h-2 rounded-full animate-sf-flicker"
+            style={{ background: "var(--sf-red)", boxShadow: "0 0 8px var(--sf-red)" }}
+          />
+          <span className="sf-label">{t("counter.live")}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {isConnected
+            ? <><Wifi size={11} style={{ color: "var(--sf-green)" }} /><span className="text-xs sf-green">CONNECTED</span></>
+            : <><WifiOff size={11} className="text-gray-600" /><span className="text-xs text-gray-600">RECONNECTING</span></>
+          }
+        </div>
+      </div>
+
       {/* Main counter */}
-      <div className="relative bg-gradient-to-br from-red-950/60 to-slate-900/80 border border-red-800/50 rounded-3xl p-6 md:p-8 overflow-hidden">
-        {/* Animated background pulse */}
-        <div className="absolute inset-0 bg-red-500/5 animate-pulse-slow rounded-3xl" />
+      <div className="space-y-1">
+        <p className="sf-label text-[9px]">{t("counter.title")}</p>
+        <div
+          className="text-5xl md:text-6xl font-black sf-number"
+          style={{ color: "var(--sf-cyan)", textShadow: "0 0 30px rgba(0,212,255,0.5)" }}
+        >
+          <RollingNumber value={stats.total_today} />
+        </div>
+        <p className="text-xs" style={{ color: "rgba(0,212,255,0.4)" }}>{t("counter.subtitle")}</p>
+      </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-              </span>
-              <span className="text-red-400 text-xs font-bold uppercase tracking-widest">
-                {t("counter.live")}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              {isConnected ? (
-                <><Wifi size={12} className="text-green-400" /><span className="text-green-400">Connected</span></>
-              ) : (
-                <><WifiOff size={12} /><span>Reconnecting…</span></>
-              )}
-            </div>
-          </div>
-
-          <div className="text-5xl md:text-7xl font-black text-white font-mono tracking-tight my-4">
-            <AnimatedNumber value={stats.total_today} />
-          </div>
-
-          <p className="text-slate-400 text-sm md:text-base">{t("counter.title")}</p>
-          <p className="text-slate-600 text-xs mt-1">{t("counter.subtitle")}</p>
-
-          <div className="mt-4 flex items-center gap-2">
-            <Activity size={14} className="text-orange-400" />
-            <span className="text-orange-400 font-mono text-sm font-semibold">
-              {stats.per_second_rate} {t("counter.rate")}
-            </span>
-          </div>
+      {/* Rate bar */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="sf-label text-[9px]">CURRENT RATE</span>
+          <span className="text-xs font-bold sf-amber">
+            {stats.per_second_rate} <span className="sf-label">{t("counter.rate")}</span>
+          </span>
+        </div>
+        <div className="h-1.5 bg-black/60 border border-sf-border/20 overflow-hidden">
+          <motion.div
+            animate={{ width: `${Math.min(stats.per_second_rate * 10, 100)}%` }}
+            transition={{ duration: 0.5 }}
+            className="h-full"
+            style={{ background: "var(--sf-amber)", boxShadow: "0 0 8px var(--sf-amber)" }}
+          />
         </div>
       </div>
 
       {/* Sub-counters */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard
-          icon={<MessageSquare size={14} />}
-          label={t("counter.sms")}
-          value={stats.sms_scams}
-          color="text-yellow-400"
-        />
-        <StatCard
-          icon={<Link size={14} />}
-          label={t("counter.phishing")}
-          value={stats.phishing_urls}
-          color="text-red-400"
-        />
-        <StatCard
-          icon={<Phone size={14} />}
-          label={t("counter.calls")}
-          value={stats.fake_calls}
-          color="text-purple-400"
-        />
+      <div className="grid grid-cols-3 gap-2">
+        <MiniStat label={t("counter.sms")}      value={stats.sms_scams}     color="var(--sf-amber)" />
+        <MiniStat label={t("counter.phishing")} value={stats.phishing_urls} color="var(--sf-red)"   />
+        <MiniStat label={t("counter.calls")}    value={stats.fake_calls}    color="var(--sf-purple)"/>
       </div>
     </div>
   );

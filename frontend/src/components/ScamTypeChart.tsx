@@ -1,111 +1,137 @@
 import { useTranslation } from "react-i18next";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from "recharts";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, ReferenceLine,
+} from "recharts";
+import { TrendingUp, TrendingDown, Minus, ExternalLink } from "lucide-react";
 import { useStore } from "../store/scamStore";
-import clsx from "clsx";
 
-const TREND_ICONS = {
-  up:     <TrendingUp size={12} className="text-red-400" />,
-  down:   <TrendingDown size={12} className="text-green-400" />,
-  stable: <Minus size={12} className="text-slate-400" />,
+const TREND_LINKS: Record<string, string> = {
+  banking:      "https://apwg.org/trendsreports/",
+  crypto:       "https://consumer.ftc.gov/articles/what-know-about-cryptocurrency-and-scams",
+  delivery:     "https://www.bleepingcomputer.com/search/?q=delivery+scam",
+  phone:        "https://consumer.ftc.gov/articles/how-recognize-and-report-spam-text-messages",
+  tech_support: "https://support.microsoft.com/en-us/windows/protect-yourself-from-tech-support-scams",
+  other:        "https://www.bleepingcomputer.com/news/security/",
+};
+
+const TREND_ICON = {
+  up:     <TrendingUp  size={10} style={{ color: "var(--sf-red)" }} />,
+  down:   <TrendingDown size={10} style={{ color: "var(--sf-green)" }} />,
+  stable: <Minus       size={10} style={{ color: "rgba(0,212,255,0.5)" }} />,
+};
+
+const TOOLTIP_STYLE = {
+  contentStyle: { background: "#000f1e", border: "1px solid rgba(0,212,255,0.2)", borderRadius: 0, fontSize: 11, fontFamily: "JetBrains Mono, monospace" },
+  itemStyle: { color: "#c8e8f0" },
+  labelStyle: { color: "rgba(0,212,255,0.6)" },
 };
 
 export default function ScamTypeChart() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { scamTypes, trend, language } = useStore();
   const isJa = language === "ja";
 
   if (!scamTypes.length) return null;
 
-  const pieData = scamTypes.map((s) => ({
-    name: isJa ? s.label_ja : s.label,
-    value: s.count,
-    color: s.color,
-  }));
-
   const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   const barData = scamTypes[0]?.weekly_data.map((_, i) => {
-    const obj: Record<string, any> = { day: days[i] ?? `D${i+1}` };
-    scamTypes.forEach((s) => { obj[s.id] = s.weekly_data[i]; });
+    const obj: Record<string, any> = { day: days[i] ?? `D${i + 1}` };
+    scamTypes.forEach(s => { obj[s.id] = s.weekly_data[i]; });
     return obj;
   }) ?? [];
 
-  // 30-day trend chart
-  const trendData = trend.slice(-14).map((p) => ({
+  const trendData = trend.slice(-14).map(p => ({
     date: p.date.slice(5),
     total: p.total,
   }));
+
+  const avg = trendData.length
+    ? Math.round(trendData.reduce((s, p) => s + p.total, 0) / trendData.length)
+    : 0;
 
   return (
     <div className="space-y-6">
       {/* Pie + legend */}
       <div>
-        <h2 className="text-white font-bold text-lg mb-4">{t("charts.breakdown")}</h2>
+        <p className="sf-label text-[9px] mb-2">THREAT CLASSIFICATION MATRIX</p>
         <div className="grid md:grid-cols-2 gap-4 items-center">
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={95}
-                paddingAngle={3} dataKey="value" stroke="none">
-                {pieData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
+              <Pie data={scamTypes.map(s => ({ name: isJa ? s.label_ja : s.label, value: s.count, color: s.color }))}
+                cx="50%" cy="50%" innerRadius={50} outerRadius={88}
+                paddingAngle={2} dataKey="value" stroke="none">
+                {scamTypes.map((s, i) => (
+                  <Cell key={i} fill={s.color} style={{ filter: `drop-shadow(0 0 6px ${s.color}80)` }} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, fontSize: 12 }}
-                formatter={(v: number) => v.toLocaleString()}
-              />
+              <Tooltip formatter={(v: number) => v.toLocaleString()} {...TOOLTIP_STYLE} />
             </PieChart>
           </ResponsiveContainer>
 
           <div className="space-y-2">
-            {scamTypes.map((s) => (
-              <div key={s.id} className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                <span className="text-slate-300 text-sm flex-1 truncate">{isJa ? s.label_ja : s.label}</span>
-                <span className="text-slate-400 text-xs font-mono">{s.percentage}%</span>
-                {TREND_ICONS[s.trend as keyof typeof TREND_ICONS]}
-              </div>
+            {scamTypes.map(s => (
+              <a
+                key={s.id}
+                href={TREND_LINKS[s.id] ?? TREND_LINKS.other}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 group hover:bg-sf-cyan/5 px-1 py-0.5 transition-colors"
+              >
+                <span className="w-2 h-2 flex-shrink-0" style={{ backgroundColor: s.color, boxShadow: `0 0 5px ${s.color}` }} />
+                <span className="text-[11px] flex-1 truncate" style={{ color: "#c8e8f0" }}>{isJa ? s.label_ja : s.label}</span>
+                <span className="text-[10px] font-bold" style={{ color: s.color }}>{s.percentage}%</span>
+                {TREND_ICON[s.trend as keyof typeof TREND_ICON]}
+                <ExternalLink size={8} className="opacity-0 group-hover:opacity-50 transition-opacity flex-shrink-0" style={{ color: "var(--sf-cyan)" }} />
+              </a>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Stacked bar */}
+      {/* Weekly bar */}
       <div>
-        <h3 className="text-slate-300 font-semibold text-sm mb-3">{t("charts.weekly")}</h3>
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-            <XAxis dataKey="day" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false}
-              tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
-            <Tooltip
-              contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, fontSize: 11 }}
-              formatter={(v: number) => v.toLocaleString()}
-            />
-            {scamTypes.map((s) => (
-              <Bar key={s.id} dataKey={s.id} stackId="a" fill={s.color} radius={[0, 0, 0, 0]} />
+        <p className="sf-label text-[9px] mb-2">{t("charts.weekly").toUpperCase()}</p>
+        <ResponsiveContainer width="100%" height={140}>
+          <BarChart data={barData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="2 4" stroke="rgba(0,212,255,0.06)" />
+            <XAxis dataKey="day" tick={{ fill: "rgba(0,212,255,0.4)", fontSize: 10, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: "rgba(0,212,255,0.4)", fontSize: 10, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false}
+              tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+            <Tooltip formatter={(v: number) => v.toLocaleString()} {...TOOLTIP_STYLE} />
+            {scamTypes.map(s => (
+              <Bar key={s.id} dataKey={s.id} stackId="a" fill={s.color} fillOpacity={0.85} radius={[0, 0, 0, 0]} />
             ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      {/* 30-day trend line */}
+      {/* 30-day trend */}
       <div>
-        <h3 className="text-slate-300 font-semibold text-sm mb-3">{t("charts.trend")}</h3>
-        <ResponsiveContainer width="100%" height={140}>
-          <LineChart data={trendData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-            <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false}
-              interval={2} />
-            <YAxis tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false}
-              tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
-            <Tooltip
-              contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, fontSize: 11 }}
-              formatter={(v: number) => v.toLocaleString()}
-            />
-            <Line type="monotone" dataKey="total" stroke="#ef4444" strokeWidth={2}
-              dot={false} activeDot={{ r: 4, fill: "#ef4444" }} />
+        <div className="flex items-center justify-between mb-2">
+          <p className="sf-label text-[9px]">{t("charts.trend").toUpperCase()}</p>
+          <a
+            href="https://apwg.org/trendsreports/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sf-btn text-[9px] py-0.5 px-2"
+          >
+            <ExternalLink size={8} />
+            APWG DATA
+          </a>
+        </div>
+        <ResponsiveContainer width="100%" height={130}>
+          <LineChart data={trendData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="2 4" stroke="rgba(0,212,255,0.06)" />
+            <XAxis dataKey="date" tick={{ fill: "rgba(0,212,255,0.4)", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} interval={2} />
+            <YAxis tick={{ fill: "rgba(0,212,255,0.4)", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+            <Tooltip formatter={(v: number) => v.toLocaleString()} {...TOOLTIP_STYLE} />
+            <ReferenceLine y={avg} stroke="rgba(0,212,255,0.2)" strokeDasharray="4 4"
+              label={{ value: "AVG", fill: "rgba(0,212,255,0.4)", fontSize: 8, fontFamily: "JetBrains Mono" }} />
+            <Line type="monotone" dataKey="total" stroke="var(--sf-red)" strokeWidth={1.5}
+              dot={false} activeDot={{ r: 3, fill: "var(--sf-red)", strokeWidth: 0 }}
+              style={{ filter: "drop-shadow(0 0 4px var(--sf-red))" }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

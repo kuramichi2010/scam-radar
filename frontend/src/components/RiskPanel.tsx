@@ -1,112 +1,128 @@
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { ShieldAlert, TrendingUp, TrendingDown, Minus, Share2 } from "lucide-react";
+import { Share2, TrendingUp, Minus, ExternalLink } from "lucide-react";
 import { useStore } from "../store/scamStore";
-import clsx from "clsx";
 
-const LEVEL_CONFIG = {
-  LOW:      { bg: "from-green-950/60 to-slate-900/80", border: "border-green-700/50", bar: "bg-green-500", text: "text-green-400", ring: "ring-green-500/30" },
-  MEDIUM:   { bg: "from-yellow-950/60 to-slate-900/80", border: "border-yellow-700/50", bar: "bg-yellow-500", text: "text-yellow-400", ring: "ring-yellow-500/30" },
-  HIGH:     { bg: "from-orange-950/60 to-slate-900/80", border: "border-orange-700/50", bar: "bg-orange-500", text: "text-orange-400", ring: "ring-orange-500/30" },
-  CRITICAL: { bg: "from-red-950/60 to-slate-900/80", border: "border-red-700/50", bar: "bg-red-500", text: "text-red-400", ring: "ring-red-500/30" },
+const LEVEL: Record<string, { color: string; code: string; bar: string }> = {
+  LOW:      { color: "var(--sf-green)",  code: "01", bar: "25%" },
+  MEDIUM:   { color: "#ffd860",          code: "02", bar: "50%" },
+  HIGH:     { color: "var(--sf-amber)",  code: "03", bar: "75%" },
+  CRITICAL: { color: "var(--sf-red)",    code: "04", bar: "100%" },
+};
+
+// Awareness links per country
+const AWARENESS_LINKS: Record<string, string> = {
+  US: "https://consumer.ftc.gov/scams",
+  JP: "https://www.ipa.go.jp/security/anshin/",
+  GB: "https://www.ncsc.gov.uk/guidance/suspicious-email-actions",
+  AU: "https://www.scamwatch.gov.au/",
+  DE: "https://www.bsi.bund.de/EN/Topics/Consumer/consumer_node.html",
+  DEFAULT: "https://apwg.org/",
 };
 
 export default function RiskPanel() {
   const { t, i18n } = useTranslation();
   const { risk, language, setShowShareModal } = useStore();
-
-  if (!risk) {
-    return (
-      <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 text-slate-500 text-sm">
-        {t("risk.detecting")}
-      </div>
-    );
-  }
-
-  const cfg = LEVEL_CONFIG[risk.level];
   const isJa = language === "ja";
-  const levelLabel = t(`risk.levels.${risk.level}`);
+
+  if (!risk) return (
+    <div className="flex items-center gap-2 py-8 justify-center">
+      <div className="w-4 h-4 border border-sf-cyan/30 border-t-sf-cyan rounded-full animate-spin" />
+      <span className="sf-label animate-pulse">{t("risk.detecting")}</span>
+    </div>
+  );
+
+  const lvl = LEVEL[risk.level] ?? LEVEL.MEDIUM;
   const threats = isJa ? risk.top_threats_ja : risk.top_threats;
-  const explanation = isJa ? risk.explanation_ja : risk.explanation;
+  const expl   = isJa ? risk.explanation_ja   : risk.explanation;
+  const awareUrl = AWARENESS_LINKS[risk.country_code] ?? AWARENESS_LINKS.DEFAULT;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={clsx(
-        "bg-gradient-to-br border rounded-3xl p-6 space-y-4",
-        cfg.bg, cfg.border
-      )}
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-slate-400 text-sm">{t("risk.title")}</p>
-          <p className="text-slate-500 text-xs">{risk.region}</p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="sf-label text-[9px]">{t("risk.title").toUpperCase()}</p>
+        <div className="flex items-center gap-2">
+          <a
+            href={awareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sf-btn text-[9px]"
+          >
+            <ExternalLink size={10} />
+            {isJa ? "啓発サイト" : "AWARENESS"}
+          </a>
+          <button onClick={() => setShowShareModal(true)} className="sf-btn-red text-[9px] sf-btn">
+            <Share2 size={10} />
+            {t("risk.share")}
+          </button>
         </div>
-        <button
-          onClick={() => setShowShareModal(true)}
-          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <Share2 size={12} />
-          {t("risk.share")}
-        </button>
       </div>
 
-      {/* Score display */}
-      <div className="flex items-center gap-4">
-        <div className={clsx("text-6xl font-black font-mono", cfg.text)}>
-          {risk.score}
-        </div>
-        <div className="flex-1">
-          <div className={clsx(
-            "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ring-2 mb-2",
-            cfg.text, cfg.ring
-          )}>
-            <ShieldAlert size={14} />
-            {levelLabel}
+      {/* Main display */}
+      <div className="sf-panel p-4 space-y-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs" style={{ color: "rgba(0,212,255,0.4)" }}>{risk.region.toUpperCase()}</p>
+            <div
+              className="text-4xl font-black tracking-widest mt-0.5 animate-sf-flicker"
+              style={{ color: lvl.color, textShadow: `0 0 25px ${lvl.color}` }}
+            >
+              {risk.level}
+            </div>
           </div>
-          <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+          <div className="text-right">
+            <p className="sf-label text-[9px]">THREAT CODE</p>
+            <p className="text-2xl font-black" style={{ color: lvl.color }}>T-{lvl.code}</p>
+          </div>
+        </div>
+
+        {/* Score bar */}
+        <div>
+          <div className="flex justify-between mb-1">
+            <span className="sf-label text-[9px]">RISK INDEX</span>
+            <span className="text-xs font-bold" style={{ color: lvl.color }}>{risk.score} / 100</span>
+          </div>
+          <div className="h-2 bg-black border border-sf-border/20 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${risk.score}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className={clsx("h-full rounded-full", cfg.bar)}
+              className="h-full"
+              style={{ background: lvl.color, boxShadow: `0 0 10px ${lvl.color}` }}
             />
           </div>
+        </div>
+
+        {/* Trend */}
+        <div className="flex items-center gap-2 text-xs">
+          <span className="sf-label text-[9px]">{t("risk.trend").toUpperCase()}:</span>
+          {risk.trend === "rising" ? (
+            <span className="flex items-center gap-1 font-bold sf-red">
+              <TrendingUp size={11} /> RISING ▲
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 font-bold sf-green">
+              <Minus size={11} /> STABLE
+            </span>
+          )}
         </div>
       </div>
 
       {/* Explanation */}
-      <p className="text-sm text-slate-300 leading-relaxed">{explanation}</p>
+      <p className="text-xs leading-relaxed" style={{ color: "rgba(200,232,240,0.7)" }}>
+        {expl}
+      </p>
 
-      {/* Trend */}
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        {t("risk.trend")}:&nbsp;
-        {risk.trend === "rising" ? (
-          <span className="flex items-center gap-1 text-red-400 font-semibold">
-            <TrendingUp size={12} /> Rising
-          </span>
-        ) : (
-          <span className="flex items-center gap-1 text-green-400 font-semibold">
-            <Minus size={12} /> Stable
-          </span>
-        )}
+      {/* Active threats */}
+      <div className="space-y-2">
+        <p className="sf-label text-[9px]">{t("risk.threats").toUpperCase()}</p>
+        {threats.map((th, i) => (
+          <div key={i} className="flex items-start gap-2 text-xs" style={{ color: "rgba(200,232,240,0.8)" }}>
+            <span className="font-bold mt-0.5" style={{ color: lvl.color }}>▸</span>
+            {th}
+          </div>
+        ))}
       </div>
-
-      {/* Threats */}
-      <div>
-        <p className="text-xs text-slate-500 mb-2 font-semibold uppercase tracking-wider">
-          {t("risk.threats")}
-        </p>
-        <ul className="space-y-1.5">
-          {threats.map((th, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-              <span className={clsx("mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0", cfg.bar)} />
-              {th}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </motion.div>
+    </div>
   );
 }
