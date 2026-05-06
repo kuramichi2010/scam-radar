@@ -1,14 +1,14 @@
-import { useEffect, useRef } from "react";
+/**
+ * Fully client-side data hook — no backend/server required.
+ * All simulation runs in the browser / Capacitor WebView.
+ */
+import { useEffect } from "react";
 import { useStore } from "../store/scamStore";
-
-const BASE = "/api";
-const WS_URL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/ws/counter`;
-
-async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(BASE + path);
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-}
+import {
+  getTodaysTotals, getHeatmapData, getScamTypes,
+  getTrendData, getRiskForCountry, getFeed, getClusters,
+  getLiveIncrement,
+} from "../utils/simulation";
 
 function detectCountry(): string {
   const lang = navigator.language || "en-US";
@@ -24,46 +24,46 @@ function detectCountry(): string {
 }
 
 export function useScamData() {
-  const { setStats, incrementStats, setHeatmap, setScamTypes, setTrend,
-          setRisk, setFeed, setClusters, setConnected } = useStore();
-  const wsRef = useRef<WebSocket | null>(null);
+  const {
+    setStats, incrementStats, setHeatmap, setScamTypes,
+    setTrend, setRisk, setFeed, setClusters, setConnected,
+  } = useStore();
 
   useEffect(() => {
-    // Initial data load
-    Promise.all([
-      apiFetch<any>("/stats/live").then(setStats).catch(() => {}),
-      apiFetch<any[]>("/heatmap").then(setHeatmap).catch(() => {}),
-      apiFetch<any[]>("/scam-types").then(setScamTypes).catch(() => {}),
-      apiFetch<any[]>("/stats/trend").then(setTrend).catch(() => {}),
-      apiFetch<any[]>("/feed?limit=12").then(setFeed).catch(() => {}),
-      apiFetch<any[]>("/clusters").then(setClusters).catch(() => {}),
-      apiFetch<any>(`/risk/${detectCountry()}`).then(setRisk).catch(() => {}),
-    ]);
+    // ── Load initial data (synchronous simulation) ────────────────
+    setStats(getTodaysTotals());
+    setHeatmap(getHeatmapData());
+    setScamTypes(getScamTypes());
+    setTrend(getTrendData());
+    setFeed(getFeed(12));
+    setClusters(getClusters());
+    setRisk(getRiskForCountry(detectCountry()));
+    setConnected(true);
 
-    // Refresh feed every 30s
+    // ── Live counter — tick every second ──────────────────────────
+    const ticker = setInterval(() => {
+      const inc = getLiveIncrement();
+      incrementStats({
+        total:        inc.total,
+        sms:          inc.sms,
+        phishing_url: inc.phishing_url,
+        fake_calls:   inc.fake_calls,
+      });
+      // Refresh today's totals every minute to keep per_second_rate accurate
+      if (new Date().getSeconds() === 0) {
+        setStats(getTodaysTotals());
+      }
+    }, 1000);
+
+    // ── Refresh feed every 30s ────────────────────────────────────
     const feedInterval = setInterval(() => {
-      apiFetch<any[]>("/feed?limit=12").then(setFeed).catch(() => {});
+      setFeed(getFeed(12));
     }, 30_000);
 
-    // WebSocket live counter
-    function connectWS() {
-      const ws = new WebSocket(WS_URL);
-      wsRef.current = ws;
-      ws.onopen = () => setConnected(true);
-      ws.onmessage = (e) => {
-        try { incrementStats(JSON.parse(e.data)); } catch {}
-      };
-      ws.onclose = () => {
-        setConnected(false);
-        setTimeout(connectWS, 3000);
-      };
-      ws.onerror = () => ws.close();
-    }
-    connectWS();
-
     return () => {
+      clearInterval(ticker);
       clearInterval(feedInterval);
-      wsRef.current?.close();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }

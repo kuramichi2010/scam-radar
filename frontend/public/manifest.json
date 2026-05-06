@@ -1,0 +1,14 @@
+{
+  "name": "ScamRadar",
+  "short_name": "ScamRadar",
+  "description": "Real-time global scam intelligence dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#00080f",
+  "theme_color": "#00080f",
+  "categories": ["security", "utilities"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

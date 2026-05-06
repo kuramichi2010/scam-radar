@@ -3,11 +3,18 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  // Capacitor bundles from dist/ — keep base as "/"
+  base: "/",
+  build: {
+    outDir: "dist",
+  },
   server: {
     port: 5174,
+    // Allow LAN access for iOS live-reload over WiFi
+    host: "0.0.0.0",
     proxy: {
       "/api": { target: "http://localhost:8001", changeOrigin: true },
-      "/ws": { target: "ws://localhost:8001", ws: true },
+      "/ws":  { target: "ws://localhost:8001",   ws: true },
     },
   },
 });

@@ -7,8 +7,9 @@ import WorldHeatMap   from "./components/WorldHeatMap";
 import ScamTypeChart  from "./components/ScamTypeChart";
 import RiskPanel      from "./components/RiskPanel";
 import AwarenessFeed  from "./components/AwarenessFeed";
-import ClusterPanel   from "./components/ClusterPanel";
-import ShareModal     from "./components/ShareModal";
+import ClusterPanel        from "./components/ClusterPanel";
+import TrendAnalysisPanel  from "./components/TrendAnalysisPanel";
+import ShareModal          from "./components/ShareModal";
 import CountryDrawer  from "./components/CountryDrawer";
 import LanguageToggle from "./components/LanguageToggle";
 import { useScamData } from "./hooks/useScamData";
@@ -83,7 +84,7 @@ export default function App() {
           <div className="hidden md:flex items-center gap-4 ml-4">
             {[
               { label: "NODES", val: "30", color: "var(--sf-green)" },
-              { label: "THREATS", val: stats ? String(stats.per_second_rate) + "/s", color: "var(--sf-red)" },
+              { label: "THREATS", val: stats ? `${stats.per_second_rate}/s` : "—", color: "var(--sf-red)" },
               { label: "STATUS", val: "ACTIVE", color: "var(--sf-cyan)" },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-1.5">
@@ -123,20 +124,20 @@ export default function App() {
       {/* ── Main ────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-4 py-5 space-y-4 relative">
 
-        {/* Row 1: Counter + Risk */}
+        {/* Hero: 3D Globe — full width, large */}
+        <SfPanel title="GLOBAL THREAT HEATMAP · 3D GLOBE" titleJa="グローバル脅威ヒートマップ · 3D地球儀" delay={0.05}>
+          <WorldHeatMap />
+        </SfPanel>
+
+        {/* Row 2: Counter + Risk */}
         <div className="grid md:grid-cols-2 gap-4">
-          <SfPanel title="LIVE THREAT COUNTER" titleJa="ライブ脅威カウンター" delay={0.05}>
+          <SfPanel title="LIVE THREAT COUNTER" titleJa="ライブ脅威カウンター" delay={0.1}>
             <LiveCounter />
           </SfPanel>
-          <SfPanel title="REGIONAL RISK ASSESSMENT" titleJa="地域リスク評価" delay={0.1}>
+          <SfPanel title="REGIONAL RISK ASSESSMENT" titleJa="地域リスク評価" delay={0.15}>
             <RiskPanel />
           </SfPanel>
         </div>
-
-        {/* Row 2: Heatmap */}
-        <SfPanel title="GLOBAL THREAT HEATMAP" titleJa="グローバル脅威ヒートマップ" delay={0.15}>
-          <WorldHeatMap />
-        </SfPanel>
 
         {/* Row 3: Charts + Feed */}
         <div className="grid lg:grid-cols-5 gap-4">
@@ -151,6 +152,11 @@ export default function App() {
         {/* Row 4: Clusters */}
         <SfPanel title="SCAM CLUSTER DETECTION" titleJa="詐欺クラスター検出" delay={0.3}>
           <ClusterPanel />
+        </SfPanel>
+
+        {/* Row 5: Historical Trend Analysis */}
+        <SfPanel title="HISTORICAL TREND ANALYSIS ENGINE" titleJa="詐欺トレンド歴史分析エンジン" delay={0.35}>
+          <TrendAnalysisPanel />
         </SfPanel>
 
         {/* Footer */}

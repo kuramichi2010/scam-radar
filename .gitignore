@@ -5,3 +5,11 @@ frontend/node_modules/
 frontend/dist/
 .DS_Store
 *.log
+
+# iOS / Capacitor
+frontend/ios/App/App/xcuserdata/
+frontend/ios/App/App.xcodeproj/xcuserdata/
+frontend/ios/App/App.xcworkspace/xcuserdata/
+frontend/ios/App/Pods/
+*.xcuserstate
+*.xccheckout
