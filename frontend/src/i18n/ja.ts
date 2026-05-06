@@ -1,0 +1,58 @@
+const ja = {
+  appName: "ScamRadar",
+  tagline: "リアルタイム グローバル詐欺インテリジェンス",
+  disclaimer: "このツールは公衆啓発のための集計情報を提供するものです。個人データの収集・追跡は一切行いません。",
+  counter: {
+    title: "本日の詐欺試行回数",
+    subtitle: "全チャンネルの世界推定値",
+    sms: "SMS詐欺",
+    phishing: "フィッシングURL",
+    calls: "偽電話",
+    rate: "毎秒",
+    live: "ライブ",
+  },
+  map: {
+    title: "グローバル詐欺ヒートマップ",
+    subtitle: "国・地域レベルのみ表示 — 個人追跡なし",
+    click: "国をクリックして詳細を確認",
+  },
+  risk: {
+    title: "あなたの地域のリスクレベル",
+    detecting: "地域を検出中…",
+    threats: "アクティブな脅威",
+    trend: "トレンド",
+    levels: { LOW: "低", MEDIUM: "中", HIGH: "高", CRITICAL: "危機的" },
+    share: "アラートをシェア",
+  },
+  charts: {
+    breakdown: "詐欺タイプ内訳",
+    trend: "30日間トレンド",
+    weekly: "7日間内訳",
+  },
+  feed: {
+    title: "ライブ詐欺インテリジェンスフィード",
+    justNow: "たった今",
+    minutesAgo: "{{n}}分前",
+    hoursAgo: "{{n}}時間前",
+    severity: { low: "低", medium: "中", high: "高", critical: "危機的" },
+  },
+  clusters: {
+    title: "詐欺クラスター検出",
+    subtitle: "過去24時間で特定された組織的攻撃クラスター",
+    count: "試行回数",
+    detected: "検出",
+  },
+  share: {
+    title: "詐欺アラートをシェア",
+    cardTitle: "⚠️ 詐欺アラート",
+    generate: "カード生成",
+    copyLink: "リンクをコピー",
+    twitter: "Xでシェア",
+    whatsapp: "WhatsAppでシェア",
+    line: "LINEでシェア",
+    download: "画像をダウンロード",
+    message: "🚨 {{region}}の詐欺リスクは本日{{level}}レベルです！\n24時間で{{count}}件の試行を検出。\n安全を守ろう：ScamRadar",
+  },
+  lang: { en: "EN", ja: "日本語" },
+};
+export default ja;

@@ -1,0 +1,58 @@
+const en = {
+  appName: "ScamRadar",
+  tagline: "Live Global Scam Intelligence",
+  disclaimer: "This tool provides aggregated insights for public awareness only. No personal data is collected or tracked.",
+  counter: {
+    title: "Scam Attempts Today",
+    subtitle: "Estimated across all channels globally",
+    sms: "SMS Scams",
+    phishing: "Phishing URLs",
+    calls: "Fake Calls",
+    rate: "per second",
+    live: "LIVE",
+  },
+  map: {
+    title: "Global Scam Heatmap",
+    subtitle: "Country & region level only — no individual tracking",
+    click: "Click a country for details",
+  },
+  risk: {
+    title: "Your Region Risk Level",
+    detecting: "Detecting your region…",
+    threats: "Active Threats",
+    trend: "Trend",
+    levels: { LOW: "Low", MEDIUM: "Medium", HIGH: "High", CRITICAL: "Critical" },
+    share: "Share Alert",
+  },
+  charts: {
+    breakdown: "Scam Type Breakdown",
+    trend: "30-Day Trend",
+    weekly: "7-Day Breakdown",
+  },
+  feed: {
+    title: "Live Scam Intelligence Feed",
+    justNow: "Just now",
+    minutesAgo: "{{n}}m ago",
+    hoursAgo: "{{n}}h ago",
+    severity: { low: "Low", medium: "Medium", high: "High", critical: "Critical" },
+  },
+  clusters: {
+    title: "Scam Cluster Detection",
+    subtitle: "Coordinated attack clusters identified in the last 24h",
+    count: "Attempts",
+    detected: "Detected",
+  },
+  share: {
+    title: "Share Scam Alert",
+    cardTitle: "⚠️ Scam Alert",
+    generate: "Generate Card",
+    copyLink: "Copy Link",
+    twitter: "Share on X",
+    whatsapp: "Share on WhatsApp",
+    line: "Share on LINE",
+    download: "Download Image",
+    message: "🚨 {{region}} is at {{level}} scam risk today!\n{{count}} attempts detected in 24h.\nStay safe: ScamRadar",
+  },
+  lang: { en: "EN", ja: "日本語" },
+};
+export default en;
